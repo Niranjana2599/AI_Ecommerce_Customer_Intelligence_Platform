@@ -21,3 +21,11 @@ artifacts/models/
 artifacts/vector_db/
 artifacts/vectorstore/
 bert_results/
+
+data/raw/
+data/Processed/
+
+*.pkl
+*.pth
+*.h5
+*.faiss

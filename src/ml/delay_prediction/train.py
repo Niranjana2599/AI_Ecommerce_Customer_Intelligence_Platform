@@ -1,0 +1,244 @@
+import os
+import pickle
+import pandas as pd
+
+from catboost import CatBoostRegressor
+
+from sklearn.model_selection import train_test_split
+
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error,
+    r2_score
+)
+
+
+# =========================================================
+# FUNCTION: TRAIN DELIVERY DELAY MODEL
+# =========================================================
+
+def run_training():
+
+    print("\n=================================================")
+    print("DELIVERY DELAY MODEL TRAINING STARTED")
+    print("=================================================\n")
+
+    # =====================================================
+    # LOAD DATA
+    # =====================================================
+
+    DATA_PATH = "data/processed/statistical_analysis_dataset.csv"
+
+    print("Loading dataset...\n")
+
+    df = pd.read_csv(DATA_PATH)
+
+    print(f"Dataset Loaded Successfully: {df.shape}")
+
+    # =====================================================
+    # DISPLAY COLUMNS
+    # =====================================================
+
+    print("\n================ DATASET COLUMNS ================\n")
+
+    print(df.columns.tolist())
+
+    print("\n=================================================\n")
+
+    # =====================================================
+    # TARGET COLUMN
+    # =====================================================
+
+    TARGET_COLUMN = "delivery_delay_days"
+
+    # =====================================================
+    # CHECK TARGET EXISTS
+    # =====================================================
+
+    if TARGET_COLUMN not in df.columns:
+
+        raise Exception(
+            f"\nTarget column '{TARGET_COLUMN}' not found.\n"
+        )
+
+    # =====================================================
+    # DROP UNNECESSARY COLUMNS
+    # =====================================================
+
+    DROP_COLUMNS = [
+
+        # IDs
+        "order_id",
+        "customer_id",
+        "customer_unique_id",
+        "product_id",
+        "seller_id",
+        "review_id",
+
+        # Dates
+        "order_purchase_timestamp",
+        "order_approved_at",
+        "order_delivered_carrier_date",
+        "order_delivered_customer_date",
+        "order_estimated_delivery_date",
+        "shipping_limit_date",
+        "review_creation_date",
+        "review_answer_timestamp",
+
+        # Target
+        "delivery_delay_days"
+
+    ]
+
+    # =====================================================
+    # FEATURE / TARGET SPLIT
+    # =====================================================
+
+    X = df.drop(columns=DROP_COLUMNS)
+
+    y = df[TARGET_COLUMN]
+
+    print("\nFeature Shape:", X.shape)
+
+    print("Target Shape:", y.shape)
+
+    # =====================================================
+    # CATEGORICAL COLUMNS
+    # =====================================================
+
+    categorical_cols = X.select_dtypes(
+        include=['object']
+    ).columns.tolist()
+
+    print("\nCategorical Columns:\n")
+
+    print(categorical_cols)
+
+    # =====================================================
+    # CREATE ARTIFACT DIRECTORY
+    # =====================================================
+
+    os.makedirs("artifacts/models", exist_ok=True)
+
+    # =====================================================
+    # SAVE FEATURE NAMES
+    # =====================================================
+
+    feature_columns = X.columns.tolist()
+
+    with open("artifacts/models/delay_features.pkl", "wb") as f:
+
+        pickle.dump(feature_columns, f)
+
+    print("\nFeature Names Saved Successfully.")
+
+    # =====================================================
+    # SAVE CATEGORICAL COLUMN LIST
+    # =====================================================
+
+    with open("artifacts/models/delay_cat_cols.pkl", "wb") as f:
+
+        pickle.dump(categorical_cols, f)
+
+    print("\nCategorical Columns Saved Successfully.")
+
+    # =====================================================
+    # TRAIN TEST SPLIT
+    # =====================================================
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.2,
+        random_state=42
+    )
+
+    print("\nTrain Shape:", X_train.shape)
+
+    print("Test Shape:", X_test.shape)
+
+    # =====================================================
+    # MODEL TRAINING
+    # =====================================================
+
+    print("\nTraining CatBoost Regressor...\n")
+
+    model = CatBoostRegressor(
+
+        iterations=200,
+        learning_rate=0.05,
+        depth=6,
+
+        loss_function='RMSE',
+
+        verbose=100,
+
+        random_state=42
+    )
+
+    model.fit(
+        X_train,
+        y_train,
+        cat_features=categorical_cols
+    )
+
+    print("\nModel Training Completed Successfully.")
+
+    # =====================================================
+    # PREDICTIONS
+    # =====================================================
+
+    y_pred = model.predict(X_test)
+
+    # =====================================================
+    # EVALUATION
+    # =====================================================
+
+    mae = mean_absolute_error(y_test, y_pred)
+
+    mse = mean_squared_error(y_test, y_pred)
+
+    rmse = mse ** 0.5
+
+    r2 = r2_score(y_test, y_pred)
+
+    print("\n=================================================")
+    print("MODEL PERFORMANCE")
+    print("=================================================\n")
+
+    print(f"MAE  : {mae:.4f}")
+
+    print(f"MSE  : {mse:.4f}")
+
+    print(f"RMSE : {rmse:.4f}")
+
+    print(f"R2   : {r2:.4f}")
+
+    # =====================================================
+    # SAVE MODEL
+    # =====================================================
+
+    model_path = "artifacts/models/delay_model.pkl"
+
+    with open(model_path, "wb") as f:
+
+        pickle.dump(model, f)
+
+    print("\n=================================================")
+    print("MODEL SAVED SUCCESSFULLY")
+    print("=================================================\n")
+
+    print(f"Saved Path: {model_path}")
+
+    print("\n=================================================")
+    print("TRAINING COMPLETED")
+    print("=================================================\n")
+
+
+# =========================================================
+# MAIN
+# =========================================================
+
+if __name__ == "__main__":
+
+    run_training()

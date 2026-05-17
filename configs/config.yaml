@@ -1,0 +1,28 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+PROJECT_NAME = os.getenv(
+    "PROJECT_NAME",
+    "AI_Ecommerce_Customer_Intelligence_Platform"
+)
+
+API_HOST = os.getenv("API_HOST", "0.0.0.0")
+API_PORT = int(os.getenv("API_PORT", 8000))
+
+STREAMLIT_PORT = int(
+    os.getenv("STREAMLIT_PORT", 8501)
+)
+
+MODEL_DIR = os.getenv(
+    "MODEL_DIR",
+    "artifacts/models"
+)
+
+VECTOR_DB_DIR = os.getenv(
+    "VECTOR_DB_DIR",
+    "artifacts/vectorstore/faiss_db"
+)
+
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")

@@ -412,9 +412,7 @@ This project demonstrates:
 - RAG Pipeline Development
 
 ---
-## Dataset
-
-Public Kaggle datasets used for educational purposes.
+**Dataset:** Public Kaggle datasets used for educational purposes.
 ---
 
 # Author

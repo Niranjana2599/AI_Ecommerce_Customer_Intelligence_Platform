@@ -68,7 +68,7 @@ This project integrates Machine Learning, Deep Learning, NLP, Recommendation Sys
 
 # Live Demo
 
-Deployment coming soon...
+Frontend: https://ai-ecommerce-customer-intelligence.onrender.com
 
 ---
 

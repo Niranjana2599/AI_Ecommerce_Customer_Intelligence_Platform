@@ -1,19 +1,13 @@
 from src.rag.vector_store import (
-
     load_vector_store
-
 )
 
 from src.rag.retriever import (
-
     create_retriever
-
 )
 
 from src.rag.chatbot import (
-
     generate_response
-
 )
 
 # =========================================================
@@ -21,6 +15,8 @@ from src.rag.chatbot import (
 # =========================================================
 
 def ask_rag(question):
+
+    print("\n========== ASK_RAG EXECUTED ==========\n")
 
     # =====================================================
     # LOAD VECTOR DATABASE
@@ -33,7 +29,9 @@ def ask_rag(question):
     # =====================================================
 
     retriever = create_retriever(
+
         vector_db
+
     )
 
     # =====================================================
@@ -42,23 +40,37 @@ def ask_rag(question):
 
     docs = retriever.invoke(question)
 
-    # =====================================================
-    # BUILD CONTEXT
-    # =====================================================
+    print("\n========== DOCUMENTS RETRIEVED ==========\n")
 
-    context = "\n".join(
-
-        [doc.page_content for doc in docs]
-
-    )
+    print(f"Total Documents Retrieved: {len(docs)}")
 
     # =====================================================
-    # GENERATE RESPONSE
+    # BUILD CLEAN CONTEXT
+    # =====================================================
+
+    clean_context = ""
+
+    for i, doc in enumerate(docs):
+
+        clean_context += f"""
+
+Retrieved Ecommerce Customer Data {i+1}:
+
+{doc.page_content}
+
+"""
+
+    print("\n========== RETRIEVED CONTEXT ==========\n")
+
+    print(clean_context)
+
+    # =====================================================
+    # GENERATE FINAL RESPONSE
     # =====================================================
 
     answer = generate_response(
 
-        context,
+        clean_context,
 
         question
 
@@ -77,15 +89,17 @@ def ask_rag(question):
     }
 
 # =========================================================
-# TEST
+# TESTING
 # =========================================================
 
 if __name__ == "__main__":
 
     result = ask_rag(
 
-        "What products have poor reviews?"
+        "Which customers are likely to churn?"
 
     )
+
+    print("\n========== FINAL OUTPUT ==========\n")
 
     print(result)

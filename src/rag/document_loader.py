@@ -6,18 +6,31 @@ from langchain_community.document_loaders import (
 
 )
 
-
 # =========================================================
 # LOAD PDF
 # =========================================================
 
 def load_pdf(file_path):
 
-    loader = PyPDFLoader(file_path)
+    try:
 
-    documents = loader.load()
+        print(f"\nLoading PDF: {file_path}")
 
-    return documents
+        loader = PyPDFLoader(file_path)
+
+        documents = loader.load()
+
+        print(f"Successfully loaded: {file_path}")
+
+        return documents
+
+    except Exception as e:
+
+        print(f"\nError loading PDF: {file_path}")
+
+        print(f"Reason: {e}")
+
+        return []
 
 
 # =========================================================

@@ -1,6 +1,10 @@
 import sys
 import os
 
+# =========================================================
+# PROJECT ROOT PATH
+# =========================================================
+
 sys.path.append(
 
     os.path.abspath(
@@ -17,7 +21,15 @@ sys.path.append(
 
 )
 
+# =========================================================
+# STREAMLIT
+# =========================================================
+
 import streamlit as st
+
+# =========================================================
+# RAG IMPORT
+# =========================================================
 
 from src.rag.predict import ask_rag
 
@@ -27,7 +39,7 @@ from src.rag.predict import ask_rag
 
 st.set_page_config(
 
-    page_title="RAG Chatbot",
+    page_title="AI Ecommerce RAG Chatbot",
 
     layout="wide"
 
@@ -39,31 +51,42 @@ st.set_page_config(
 
 st.title(
 
-    "AI Ecommerce RAG Chatbot"
+    "AI Ecommerce Customer Intelligence RAG Chatbot"
 
 )
 
 st.markdown(
 
-    "Ask questions about ecommerce business insights"
+    """
+Ask ecommerce business questions using your AI-powered RAG system.
 
+Examples:
+- Which customers are likely to churn?
+- Which products have poor reviews?
+- Summarize customer behavior patterns
+- What are the high-risk customer segments?
+"""
 )
 
 # =========================================================
-# USER INPUT
+# USER QUESTION
 # =========================================================
 
 question = st.text_input(
 
-    "Enter your question"
+    "Enter your ecommerce question"
 
 )
 
 # =========================================================
-# ASK QUESTION
+# ASK AI BUTTON
 # =========================================================
 
 if st.button("Ask AI"):
+
+    # =====================================================
+    # VALIDATION
+    # =====================================================
 
     if question.strip() == "":
 
@@ -75,34 +98,66 @@ if st.button("Ask AI"):
 
     else:
 
+        # =================================================
+        # LOADING
+        # =================================================
+
         with st.spinner(
 
-            "Generating response..."
+            "Generating AI response..."
 
         ):
 
-            print("ASK_RAG EXECUTED")
+            try:
 
-            result = ask_rag(question)
+                print("\n========== STREAMLIT REQUEST ==========\n")
 
-            st.success(
+                print(question)
 
-                "Response Generated Successfully"
+                # =========================================
+                # GET RESPONSE
+                # =========================================
 
-            )
+                result = ask_rag(question)
 
-            st.subheader("Question")
+                # =========================================
+                # SUCCESS
+                # =========================================
 
-            st.write(
+                st.success(
 
-                result['question']
+                    "AI Response Generated Successfully"
 
-            )
+                )
 
-            st.subheader("Answer")
+                # =========================================
+                # DISPLAY QUESTION
+                # =========================================
 
-            st.write(
+                st.subheader("Question")
 
-                result['answer']
+                st.write(
 
-            )
+                    result["question"]
+
+                )
+
+                # =========================================
+                # DISPLAY ANSWER
+                # =========================================
+
+                st.subheader("AI Answer")
+
+                st.write(
+
+                    result["answer"]
+
+                )
+
+            except Exception as e:
+                
+                import traceback
+                
+                st.error(f"Error occurred: {str(e)}")    
+                
+                st.text(traceback.format_exc())

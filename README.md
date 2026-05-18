@@ -286,14 +286,46 @@ docker compose up
 
 # Screenshots
 
-Add screenshots here:
+# Application Screenshots
 
-* Streamlit Dashboard
-* FastAPI Swagger Docs
-* NLP Sentiment Module
-* RAG Chatbot
-* Recommendation System
-* Docker Containers Running
+## Home Page
+![Home](assets/screenshots/home_streamlit.png)
+
+## Churn Prediction
+![Churn](assets/screenshots/churn_prediction.png)
+
+## CLV Prediction
+![CLV](assets/screenshots/clv_prediction.png)
+
+## Delay Prediction
+![Delay](assets/screenshots/delay_prediction.png)
+
+## Recommendation System
+![Recommendation](assets/screenshots/recommendation_system.png)
+
+## LightGCN Recommendation
+![LightGCN](assets/screenshots/lightgcn.png)
+
+## NLP Sentiment Analysis
+![NLP](assets/screenshots/nlp_sentiment_analysis.png)
+
+## BERT Sentiment Analysis
+![BERT](assets/screenshots/BERT%20Sentiment%20Analysis.png)
+
+## RAG Chatbot
+![RAG](assets/screenshots/RAG%20Chatbot.png)
+
+## Time Series Forecasting
+![Forecasting](assets/screenshots/time_series_forecasting.png)
+
+## Swagger API Docs
+![Swagger](assets/screenshots/Swagger_api_docs.png)
+
+## Docker Running Containers
+![Docker](assets/screenshots/Docker_running_containers.png)
+
+## API Calls
+![API](assets/screenshots/api_calls.png)
 
 ---
 

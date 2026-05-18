@@ -115,6 +115,7 @@ Deployment coming soon...
                    │    Dockerized Services   │
                    │    Streamlit + FastAPI   │
                    └──────────────────────────┘
+```
 ---
 
 # Tech Stack
@@ -352,7 +353,7 @@ docker compose up
 
 ## LightGCN Recommendation
 
-![LightGCN](assets/screenshots/lightgcn.png)
+![LightGCN](assets/screenshots/Lightgcn.png)
 
 ---
 
@@ -382,13 +383,13 @@ docker compose up
 
 ## Swagger API Docs
 
-![Swagger](assets/screenshots/swagger_api_docs.png)
+![Swagger](assets/screenshots/Swagger_api_docs.png)
 
 ---
 
 ## Docker Running Containers
 
-![Docker](assets/screenshots/docker_running_containers.png)
+![Docker](assets/screenshots/Docker_running_containers.png)
 
 ---
 

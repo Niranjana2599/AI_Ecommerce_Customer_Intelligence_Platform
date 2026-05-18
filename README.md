@@ -74,6 +74,8 @@ Deployment coming soon...
 
 # System Architecture
 
+```text
+
                    ┌──────────────────────────┐
                    │      Streamlit UI        │
                    │   Frontend Dashboard     │
@@ -89,10 +91,10 @@ Deployment coming soon...
      ▼               ▼          ▼          ▼               ▼
 
 ┌─────────────┐ ┌────────────┐ ┌──────────┐ ┌───────────┐ ┌─────────────┐
-│ ML Models   │ │ DL Models  │ │ NLP/LLM │ │ Forecast  │ │ RAG System  │
-│ Churn       │ │ LightGCN   │ │ BERT    │ │ ARIMA     │ │ LangChain   │
-│ CLV         │ │ LSTM       │ │ GPT-2   │ │ Prophet   │ │ FAISS       │
-│ Delay Pred. │ │ Deep RecSys│ │ Word2Vec│ │ XGBoost   │ │ Embeddings  │
+│ ML Models   │ │ DL Models  │ │ NLP/LLM  │ │ Forecast  │ │ RAG System  │
+│ Churn       │ │ LightGCN   │ │ BERT     │ │ ARIMA     │ │ LangChain   │
+│ CLV         │ │ LSTM       │ │ GPT-2    │ │ Prophet   │ │ FAISS       │
+│ Delay Pred. │ │ Reccomend  │ │ Word2Vec │ │ XGBoost   │ │ Embeddings  │
 └─────────────┘ └────────────┘ └──────────┘ └───────────┘ └─────────────┘
 
         │               │           │            │              │
@@ -103,7 +105,7 @@ Deployment coming soon...
                    ┌──────────────────────────┐
                    │     Model Artifacts      │
                    │ Models / Encoders / NLP  │
-                   │ Vector DB / Weights      │
+                   │   Vector DB / Weights    │
                    └──────────────────────────┘
 
                                 │
@@ -111,7 +113,7 @@ Deployment coming soon...
 
                    ┌──────────────────────────┐
                    │    Dockerized Services   │
-                   │ Streamlit + FastAPI      │
+                   │    Streamlit + FastAPI   │
                    └──────────────────────────┘
 ---
 

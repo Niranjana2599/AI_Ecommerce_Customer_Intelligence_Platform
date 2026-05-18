@@ -74,33 +74,45 @@ Deployment coming soon...
 
 # System Architecture
 
-```text
-                   ┌──────────────────────┐
-                   │    Streamlit UI      │
-                   │  Frontend Dashboard  │
-                   └──────────┬───────────┘
-                              │
-                              ▼
-                   ┌──────────────────────┐
-                   │      FastAPI API     │
-                   │  Backend Inference   │
-                   └──────────┬───────────┘
-                              │
-      ┌───────────────────────┼────────────────────────┐
-      ▼                       ▼                        ▼
-┌─────────────┐      ┌────────────────┐      ┌────────────────┐
-│ ML Models   │      │ NLP Pipelines │      │ RAG Chatbot    │
-│ Churn/CLV   │      │ BERT/GPT2     │      │ FAISS + LLM    │
-└─────────────┘      └────────────────┘      └────────────────┘
-      │                       │                        │
-      └───────────────────────┼────────────────────────┘
-                              ▼
-                   ┌──────────────────────┐
-                   │    Model Artifacts   │
-                   │   Encoders/Weights   │
-                   └──────────────────────┘
-```
+                   ┌──────────────────────────┐
+                   │      Streamlit UI        │
+                   │   Frontend Dashboard     │
+                   └────────────┬─────────────┘
+                                │
+                                ▼
+                   ┌──────────────────────────┐
+                   │       FastAPI API        │
+                   │    Backend Inference     │
+                   └────────────┬─────────────┘
+                                │
+     ┌───────────────┬──────────┼──────────┬───────────────┐
+     ▼               ▼          ▼          ▼               ▼
 
+┌─────────────┐ ┌────────────┐ ┌──────────┐ ┌───────────┐ ┌─────────────┐
+│ ML Models   │ │ DL Models  │ │ NLP/LLM │ │ Forecast  │ │ RAG System  │
+│ Churn       │ │ LightGCN   │ │ BERT    │ │ ARIMA     │ │ LangChain   │
+│ CLV         │ │ LSTM       │ │ GPT-2   │ │ Prophet   │ │ FAISS       │
+│ Delay Pred. │ │ Deep RecSys│ │ Word2Vec│ │ XGBoost   │ │ Embeddings  │
+└─────────────┘ └────────────┘ └──────────┘ └───────────┘ └─────────────┘
+
+        │               │           │            │              │
+        └───────────────┴───────────┴────────────┴──────────────┘
+                                │
+                                ▼
+
+                   ┌──────────────────────────┐
+                   │     Model Artifacts      │
+                   │ Models / Encoders / NLP  │
+                   │ Vector DB / Weights      │
+                   └──────────────────────────┘
+
+                                │
+                                ▼
+
+                   ┌──────────────────────────┐
+                   │    Dockerized Services   │
+                   │ Streamlit + FastAPI      │
+                   └──────────────────────────┘
 ---
 
 # Tech Stack
@@ -411,8 +423,6 @@ This project demonstrates:
 - Modular Software Architecture
 - RAG Pipeline Development
 
----
-Dataset: Public Kaggle datasets used for educational purposes.
 ---
 
 # Author

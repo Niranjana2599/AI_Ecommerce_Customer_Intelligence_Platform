@@ -399,6 +399,16 @@ docker compose up
 
 ---
 
+# MLOps Integration
+
+Implemented MLflow for:
+
+- experiment tracking
+- metric logging
+- parameter tracking
+- model artifact management
+
+
 # Future Improvements
 
 - CI/CD Pipeline Integration

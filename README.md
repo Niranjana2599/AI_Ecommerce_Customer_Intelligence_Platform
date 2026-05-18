@@ -412,10 +412,15 @@ This project demonstrates:
 - RAG Pipeline Development
 
 ---
+# Dataset Acknowledgment
+
+Datasets used in this project are sourced from publicly available ecommerce and Kaggle datasets for educational and portfolio purposes.
+
+---
 
 # Author
 
-Niranjana T
+Niranjana Thirumaraiselvan
 
 ---
 

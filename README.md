@@ -412,7 +412,7 @@ This project demonstrates:
 - RAG Pipeline Development
 
 ---
-# Dataset Acknowledgment
+### Dataset Acknowledgment
 
 Datasets used in this project are sourced from publicly available ecommerce and Kaggle datasets for educational and portfolio purposes.
 
@@ -423,7 +423,3 @@ Datasets used in this project are sourced from publicly available ecommerce and 
 Niranjana Thirumaraiselvan
 
 ---
-
-# License
-
-This project is licensed under the MIT License.

@@ -19,12 +19,7 @@ sys.path.append(
 
 import streamlit as st
 
-from src.rag.predict import (
-
-    ask_rag
-
-)
-
+from src.rag.predict import ask_rag
 
 # =========================================================
 # PAGE CONFIG
@@ -37,7 +32,6 @@ st.set_page_config(
     layout="wide"
 
 )
-
 
 # =========================================================
 # TITLE
@@ -55,7 +49,6 @@ st.markdown(
 
 )
 
-
 # =========================================================
 # USER INPUT
 # =========================================================
@@ -66,38 +59,50 @@ question = st.text_input(
 
 )
 
-
 # =========================================================
 # ASK QUESTION
 # =========================================================
 
 if st.button("Ask AI"):
 
-    with st.spinner(
+    if question.strip() == "":
 
-        "Generating response..."
+        st.warning(
 
-    ):
-
-        result = ask_rag(question)
-
-        st.success(
-
-            "Response Generated Successfully"
-        )
-
-        st.subheader("Question")
-
-        st.write(
-
-            result['question']
+            "Please enter a question."
 
         )
 
-        st.subheader("Answer")
+    else:
 
-        st.write(
+        with st.spinner(
 
-            result['answer']
+            "Generating response..."
 
-        )
+        ):
+
+            print("ASK_RAG EXECUTED")
+
+            result = ask_rag(question)
+
+            st.success(
+
+                "Response Generated Successfully"
+
+            )
+
+            st.subheader("Question")
+
+            st.write(
+
+                result['question']
+
+            )
+
+            st.subheader("Answer")
+
+            st.write(
+
+                result['answer']
+
+            )

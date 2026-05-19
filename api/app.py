@@ -1,31 +1,119 @@
+import os
+import nltk
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from src.ml.churn.predict import predict_churn
-from src.ml.clv.predict import predict_clv
-from src.ml.delay_prediction.predict import predict_delay
 
-from src.ml.recommendations.predict import (
-    recommend_products
-)
+# =========================================================
+# NLTK — download only if missing (never re-downloads)
+# =========================================================
 
-from src.nlp.sentiment_analysis import (
-    predict_sentiment
-)
+def _ensure_nltk_data():
+    resources = {
+        "punkt":           "tokenizers/punkt",
+        "punkt_tab":       "tokenizers/punkt_tab",
+        "stopwords":       "corpora/stopwords",
+        "wordnet":         "corpora/wordnet",
+        "averaged_perceptron_tagger": "taggers/averaged_perceptron_tagger",
+        "omw-1.4":         "corpora/omw-1.4",
+    }
+    for name, path in resources.items():
+        try:
+            nltk.data.find(path)
+        except LookupError:
+            nltk.download(name, quiet=True)
 
-from src.nlp.summarization import (
-    summarize_review
-)
+_ensure_nltk_data()
 
-from src.nlp.complaint_detection import (
-    detect_complaint
-)
 
-from src.dl.lightgcn.predict import (
-    recommend_products as lightgcn_recommend
-)
+# =========================================================
+# LAZY MODEL REGISTRY
+# Modules are imported only on the first request that needs
+# them — NOT at server startup.  This eliminates the
+# catboost / lightgbm / transformers banner spam.
+# =========================================================
 
-from src.rag.predict import ask_rag
+_predict_churn_fn      = None
+_predict_clv_fn        = None
+_predict_delay_fn      = None
+_recommend_products_fn = None
+_predict_sentiment_fn  = None
+_summarize_review_fn   = None
+_detect_complaint_fn   = None
+_lightgcn_recommend_fn = None
+_ask_rag_fn            = None
+
+
+def _get_predict_churn():
+    global _predict_churn_fn
+    if _predict_churn_fn is None:
+        from src.ml.churn.predict import predict_churn
+        _predict_churn_fn = predict_churn
+    return _predict_churn_fn
+
+
+def _get_predict_clv():
+    global _predict_clv_fn
+    if _predict_clv_fn is None:
+        from src.ml.clv.predict import predict_clv
+        _predict_clv_fn = predict_clv
+    return _predict_clv_fn
+
+
+def _get_predict_delay():
+    global _predict_delay_fn
+    if _predict_delay_fn is None:
+        from src.ml.delay_prediction.predict import predict_delay
+        _predict_delay_fn = predict_delay
+    return _predict_delay_fn
+
+
+def _get_recommend_products():
+    global _recommend_products_fn
+    if _recommend_products_fn is None:
+        from src.ml.recommendations.predict import recommend_products
+        _recommend_products_fn = recommend_products
+    return _recommend_products_fn
+
+
+def _get_predict_sentiment():
+    global _predict_sentiment_fn
+    if _predict_sentiment_fn is None:
+        from src.nlp.sentiment_analysis import predict_sentiment
+        _predict_sentiment_fn = predict_sentiment
+    return _predict_sentiment_fn
+
+
+def _get_summarize_review():
+    global _summarize_review_fn
+    if _summarize_review_fn is None:
+        from src.nlp.summarization import summarize_review
+        _summarize_review_fn = summarize_review
+    return _summarize_review_fn
+
+
+def _get_detect_complaint():
+    global _detect_complaint_fn
+    if _detect_complaint_fn is None:
+        from src.nlp.complaint_detection import detect_complaint
+        _detect_complaint_fn = detect_complaint
+    return _detect_complaint_fn
+
+
+def _get_lightgcn_recommend():
+    global _lightgcn_recommend_fn
+    if _lightgcn_recommend_fn is None:
+        from src.dl.lightgcn.predict import recommend_products as lightgcn_recommend
+        _lightgcn_recommend_fn = lightgcn_recommend
+    return _lightgcn_recommend_fn
+
+
+def _get_ask_rag():
+    global _ask_rag_fn
+    if _ask_rag_fn is None:
+        from src.rag.predict import ask_rag
+        _ask_rag_fn = ask_rag
+    return _ask_rag_fn
 
 
 # =========================================================
@@ -33,7 +121,9 @@ from src.rag.predict import ask_rag
 # =========================================================
 
 app = FastAPI(
-    title="AI Ecommerce Customer Intelligence API"
+    title="AI Ecommerce Customer Intelligence API",
+    description="Churn · CLV · Delay · Recommendations · NLP · LightGCN · RAG",
+    version="1.0.0",
 )
 
 
@@ -133,7 +223,6 @@ class EcommerceInput(BaseModel):
 # =========================================================
 
 class RecommendationInput(BaseModel):
-
     product_id: str
 
 
@@ -142,7 +231,6 @@ class RecommendationInput(BaseModel):
 # =========================================================
 
 class NLPInput(BaseModel):
-
     text: str
 
 
@@ -151,9 +239,7 @@ class NLPInput(BaseModel):
 # =========================================================
 
 class LightGCNInput(BaseModel):
-
     customer_id: str
-
     top_k: int = 10
 
 
@@ -162,7 +248,6 @@ class LightGCNInput(BaseModel):
 # =========================================================
 
 class RagInput(BaseModel):
-
     question: str
 
 
@@ -172,7 +257,6 @@ class RagInput(BaseModel):
 
 @app.get("/")
 def home():
-
     return {
         "message": "AI Ecommerce Customer Intelligence API Running Successfully"
     }
@@ -184,11 +268,7 @@ def home():
 
 @app.post("/predict/churn")
 def churn_prediction(data: EcommerceInput):
-
-    input_data = data.dict()
-
-    result = predict_churn(input_data)
-
+    result = _get_predict_churn()(data.dict())
     return result
 
 
@@ -198,11 +278,7 @@ def churn_prediction(data: EcommerceInput):
 
 @app.post("/predict/clv")
 def clv_prediction(data: EcommerceInput):
-
-    input_data = data.dict()
-
-    result = predict_clv(input_data)
-
+    result = _get_predict_clv()(data.dict())
     return result
 
 
@@ -212,11 +288,7 @@ def clv_prediction(data: EcommerceInput):
 
 @app.post("/predict/delay")
 def delay_prediction(data: EcommerceInput):
-
-    input_data = data.dict()
-
-    result = predict_delay(input_data)
-
+    result = _get_predict_delay()(data.dict())
     return result
 
 
@@ -226,9 +298,7 @@ def delay_prediction(data: EcommerceInput):
 
 @app.post("/recommend/products")
 def recommendation_endpoint(data: RecommendationInput):
-
-    result = recommend_products(data.product_id)
-
+    result = _get_recommend_products()(data.product_id)
     return result
 
 
@@ -238,9 +308,7 @@ def recommendation_endpoint(data: RecommendationInput):
 
 @app.post("/nlp/sentiment")
 def sentiment_route(data: NLPInput):
-
-    result = predict_sentiment(data.text)
-
+    result = _get_predict_sentiment()(data.text)
     return result
 
 
@@ -250,14 +318,8 @@ def sentiment_route(data: NLPInput):
 
 @app.post("/nlp/summarize")
 def summarize_route(data: NLPInput):
-
-    result = summarize_review(data.text)
-
-    return {
-
-        "summary": result
-
-    }
+    result = _get_summarize_review()(data.text)
+    return {"summary": result}
 
 
 # =========================================================
@@ -266,9 +328,7 @@ def summarize_route(data: NLPInput):
 
 @app.post("/nlp/complaint")
 def complaint_route(data: NLPInput):
-
-    result = detect_complaint(data.text)
-
+    result = _get_detect_complaint()(data.text)
     return result
 
 
@@ -278,15 +338,7 @@ def complaint_route(data: NLPInput):
 
 @app.post("/recommend/lightgcn")
 def lightgcn_route(data: LightGCNInput):
-
-    result = lightgcn_recommend(
-
-        data.customer_id,
-
-        data.top_k
-
-    )
-
+    result = _get_lightgcn_recommend()(data.customer_id, data.top_k)
     return result
 
 
@@ -296,11 +348,5 @@ def lightgcn_route(data: LightGCNInput):
 
 @app.post("/rag/chat")
 def rag_chatbot(data: RagInput):
-
-    result = ask_rag(
-
-        data.question
-
-    )
-
+    result = _get_ask_rag()(data.question)
     return result

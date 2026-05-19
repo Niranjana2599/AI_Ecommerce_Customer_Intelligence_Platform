@@ -28,12 +28,11 @@ from langsmith import traceable
 from langchain_ollama import ChatOllama
 
 llm = ChatOllama(
-
     model="phi3",
-
+    base_url=os.getenv("OLLAMA_BASE_URL"),
     temperature=0.3
-
 )
+
 
 # =========================================================
 # PROMPT TEMPLATE

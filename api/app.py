@@ -1,120 +1,41 @@
 import os
+import time
 import nltk
+
 from fastapi import FastAPI
+from fastapi.responses import Response
 from pydantic import BaseModel
 
+from prometheus_client import (
+    Counter,
+    Histogram,
+    generate_latest
+)
 
 # =========================================================
-# NLTK — download only if missing (never re-downloads)
+# NLTK — download only if missing
 # =========================================================
 
 def _ensure_nltk_data():
+
     resources = {
-        "punkt":           "tokenizers/punkt",
-        "punkt_tab":       "tokenizers/punkt_tab",
-        "stopwords":       "corpora/stopwords",
-        "wordnet":         "corpora/wordnet",
+        "punkt": "tokenizers/punkt",
+        "punkt_tab": "tokenizers/punkt_tab",
+        "stopwords": "corpora/stopwords",
+        "wordnet": "corpora/wordnet",
         "averaged_perceptron_tagger": "taggers/averaged_perceptron_tagger",
-        "omw-1.4":         "corpora/omw-1.4",
+        "omw-1.4": "corpora/omw-1.4",
     }
+
     for name, path in resources.items():
+
         try:
             nltk.data.find(path)
+
         except LookupError:
             nltk.download(name, quiet=True)
 
 _ensure_nltk_data()
-
-
-# =========================================================
-# LAZY MODEL REGISTRY
-# Modules are imported only on the first request that needs
-# them — NOT at server startup.  This eliminates the
-# catboost / lightgbm / transformers banner spam.
-# =========================================================
-
-_predict_churn_fn      = None
-_predict_clv_fn        = None
-_predict_delay_fn      = None
-_recommend_products_fn = None
-_predict_sentiment_fn  = None
-_summarize_review_fn   = None
-_detect_complaint_fn   = None
-_lightgcn_recommend_fn = None
-_ask_rag_fn            = None
-
-
-def _get_predict_churn():
-    global _predict_churn_fn
-    if _predict_churn_fn is None:
-        from src.ml.churn.predict import predict_churn
-        _predict_churn_fn = predict_churn
-    return _predict_churn_fn
-
-
-def _get_predict_clv():
-    global _predict_clv_fn
-    if _predict_clv_fn is None:
-        from src.ml.clv.predict import predict_clv
-        _predict_clv_fn = predict_clv
-    return _predict_clv_fn
-
-
-def _get_predict_delay():
-    global _predict_delay_fn
-    if _predict_delay_fn is None:
-        from src.ml.delay_prediction.predict import predict_delay
-        _predict_delay_fn = predict_delay
-    return _predict_delay_fn
-
-
-def _get_recommend_products():
-    global _recommend_products_fn
-    if _recommend_products_fn is None:
-        from src.ml.recommendations.predict import recommend_products
-        _recommend_products_fn = recommend_products
-    return _recommend_products_fn
-
-
-def _get_predict_sentiment():
-    global _predict_sentiment_fn
-    if _predict_sentiment_fn is None:
-        from src.nlp.sentiment_analysis import predict_sentiment
-        _predict_sentiment_fn = predict_sentiment
-    return _predict_sentiment_fn
-
-
-def _get_summarize_review():
-    global _summarize_review_fn
-    if _summarize_review_fn is None:
-        from src.nlp.summarization import summarize_review
-        _summarize_review_fn = summarize_review
-    return _summarize_review_fn
-
-
-def _get_detect_complaint():
-    global _detect_complaint_fn
-    if _detect_complaint_fn is None:
-        from src.nlp.complaint_detection import detect_complaint
-        _detect_complaint_fn = detect_complaint
-    return _detect_complaint_fn
-
-
-def _get_lightgcn_recommend():
-    global _lightgcn_recommend_fn
-    if _lightgcn_recommend_fn is None:
-        from src.dl.lightgcn.predict import recommend_products as lightgcn_recommend
-        _lightgcn_recommend_fn = lightgcn_recommend
-    return _lightgcn_recommend_fn
-
-
-def _get_ask_rag():
-    global _ask_rag_fn
-    if _ask_rag_fn is None:
-        from src.rag.predict import ask_rag
-        _ask_rag_fn = ask_rag
-    return _ask_rag_fn
-
 
 # =========================================================
 # FASTAPI APP
@@ -126,9 +47,152 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# =========================================================
+# PROMETHEUS METRICS
+# =========================================================
+
+REQUEST_COUNT = Counter(
+    "api_requests_total",
+    "Total API Requests",
+    ["method", "endpoint"]
+)
+
+REQUEST_LATENCY = Histogram(
+    "api_request_latency_seconds",
+    "API Request Latency",
+    ["endpoint"]
+)
 
 # =========================================================
-# COMMON INPUT SCHEMA
+# MONITORING MIDDLEWARE
+# =========================================================
+
+@app.middleware("http")
+async def monitor_requests(request, call_next):
+
+    start_time = time.time()
+
+    response = await call_next(request)
+
+    duration = time.time() - start_time
+
+    REQUEST_COUNT.labels(
+        method=request.method,
+        endpoint=request.url.path
+    ).inc()
+
+    REQUEST_LATENCY.labels(
+        endpoint=request.url.path
+    ).observe(duration)
+
+    return response
+
+# =========================================================
+# LAZY MODEL REGISTRY
+# =========================================================
+
+_predict_churn_fn = None
+_predict_clv_fn = None
+_predict_delay_fn = None
+_recommend_products_fn = None
+_predict_sentiment_fn = None
+_summarize_review_fn = None
+_detect_complaint_fn = None
+_lightgcn_recommend_fn = None
+_ask_rag_fn = None
+
+
+def _get_predict_churn():
+    global _predict_churn_fn
+
+    if _predict_churn_fn is None:
+        from src.ml.churn.predict import predict_churn
+        _predict_churn_fn = predict_churn
+
+    return _predict_churn_fn
+
+
+def _get_predict_clv():
+    global _predict_clv_fn
+
+    if _predict_clv_fn is None:
+        from src.ml.clv.predict import predict_clv
+        _predict_clv_fn = predict_clv
+
+    return _predict_clv_fn
+
+
+def _get_predict_delay():
+    global _predict_delay_fn
+
+    if _predict_delay_fn is None:
+        from src.ml.delay_prediction.predict import predict_delay
+        _predict_delay_fn = predict_delay
+
+    return _predict_delay_fn
+
+
+def _get_recommend_products():
+    global _recommend_products_fn
+
+    if _recommend_products_fn is None:
+        from src.ml.recommendations.predict import recommend_products
+        _recommend_products_fn = recommend_products
+
+    return _recommend_products_fn
+
+
+def _get_predict_sentiment():
+    global _predict_sentiment_fn
+
+    if _predict_sentiment_fn is None:
+        from src.nlp.sentiment_analysis import predict_sentiment
+        _predict_sentiment_fn = predict_sentiment
+
+    return _predict_sentiment_fn
+
+
+def _get_summarize_review():
+    global _summarize_review_fn
+
+    if _summarize_review_fn is None:
+        from src.nlp.summarization import summarize_review
+        _summarize_review_fn = summarize_review
+
+    return _summarize_review_fn
+
+
+def _get_detect_complaint():
+    global _detect_complaint_fn
+
+    if _detect_complaint_fn is None:
+        from src.nlp.complaint_detection import detect_complaint
+        _detect_complaint_fn = detect_complaint
+
+    return _detect_complaint_fn
+
+
+def _get_lightgcn_recommend():
+    global _lightgcn_recommend_fn
+
+    if _lightgcn_recommend_fn is None:
+        from src.dl.lightgcn.predict import recommend_products as lightgcn_recommend
+        _lightgcn_recommend_fn = lightgcn_recommend
+
+    return _lightgcn_recommend_fn
+
+
+def _get_ask_rag():
+    global _ask_rag_fn
+
+    if _ask_rag_fn is None:
+        from src.rag.predict import ask_rag
+        _ask_rag_fn = ask_rag
+
+    return _ask_rag_fn
+
+# =========================================================
+# INPUT SCHEMAS
 # =========================================================
 
 class EcommerceInput(BaseModel):
@@ -218,38 +282,43 @@ class EcommerceInput(BaseModel):
     Monetary: float
 
 
-# =========================================================
-# RECOMMENDATION INPUT
-# =========================================================
-
 class RecommendationInput(BaseModel):
     product_id: str
 
 
-# =========================================================
-# NLP INPUT
-# =========================================================
-
 class NLPInput(BaseModel):
     text: str
 
-
-# =========================================================
-# LIGHTGCN INPUT
-# =========================================================
 
 class LightGCNInput(BaseModel):
     customer_id: str
     top_k: int = 10
 
 
-# =========================================================
-# RAG INPUT
-# =========================================================
-
 class RagInput(BaseModel):
     question: str
 
+# =========================================================
+# HEALTH ROUTE
+# =========================================================
+
+@app.get("/health")
+def health():
+    return {
+        "status": "healthy"
+    }
+
+# =========================================================
+# METRICS ROUTE
+# =========================================================
+
+@app.get("/metrics")
+def metrics():
+
+    return Response(
+        generate_latest(),
+        media_type="text/plain"
+    )
 
 # =========================================================
 # HOME ROUTE
@@ -257,96 +326,111 @@ class RagInput(BaseModel):
 
 @app.get("/")
 def home():
+
     return {
         "message": "AI Ecommerce Customer Intelligence API Running Successfully"
     }
 
-
 # =========================================================
-# CHURN PREDICTION ROUTE
+# CHURN PREDICTION
 # =========================================================
 
 @app.post("/predict/churn")
 def churn_prediction(data: EcommerceInput):
+
     result = _get_predict_churn()(data.dict())
+
     return result
 
-
 # =========================================================
-# CLV PREDICTION ROUTE
+# CLV PREDICTION
 # =========================================================
 
 @app.post("/predict/clv")
 def clv_prediction(data: EcommerceInput):
+
     result = _get_predict_clv()(data.dict())
+
     return result
 
-
 # =========================================================
-# DELIVERY DELAY PREDICTION ROUTE
+# DELIVERY DELAY PREDICTION
 # =========================================================
 
 @app.post("/predict/delay")
 def delay_prediction(data: EcommerceInput):
+
     result = _get_predict_delay()(data.dict())
+
     return result
 
-
 # =========================================================
-# PRODUCT RECOMMENDATION ROUTE
+# PRODUCT RECOMMENDATION
 # =========================================================
 
 @app.post("/recommend/products")
 def recommendation_endpoint(data: RecommendationInput):
+
     result = _get_recommend_products()(data.product_id)
+
     return result
 
-
 # =========================================================
-# SENTIMENT ANALYSIS ROUTE
+# SENTIMENT ANALYSIS
 # =========================================================
 
 @app.post("/nlp/sentiment")
 def sentiment_route(data: NLPInput):
+
     result = _get_predict_sentiment()(data.text)
+
     return result
 
-
 # =========================================================
-# REVIEW SUMMARIZATION ROUTE
+# REVIEW SUMMARIZATION
 # =========================================================
 
 @app.post("/nlp/summarize")
 def summarize_route(data: NLPInput):
-    result = _get_summarize_review()(data.text)
-    return {"summary": result}
 
+    result = _get_summarize_review()(data.text)
+
+    return {
+        "summary": result
+    }
 
 # =========================================================
-# COMPLAINT DETECTION ROUTE
+# COMPLAINT DETECTION
 # =========================================================
 
 @app.post("/nlp/complaint")
 def complaint_route(data: NLPInput):
+
     result = _get_detect_complaint()(data.text)
+
     return result
 
-
 # =========================================================
-# LIGHTGCN RECOMMENDATION ROUTE
+# LIGHTGCN RECOMMENDATION
 # =========================================================
 
 @app.post("/recommend/lightgcn")
 def lightgcn_route(data: LightGCNInput):
-    result = _get_lightgcn_recommend()(data.customer_id, data.top_k)
+
+    result = _get_lightgcn_recommend()(
+        data.customer_id,
+        data.top_k
+    )
+
     return result
 
-
 # =========================================================
-# RAG CHATBOT ENDPOINT
+# RAG CHATBOT
 # =========================================================
 
 @app.post("/rag/chat")
 def rag_chatbot(data: RagInput):
+
     result = _get_ask_rag()(data.question)
+
     return result

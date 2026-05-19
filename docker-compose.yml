@@ -1,22 +1,6 @@
+version: "3.9"
+
 services:
-
-  streamlit:
-    build: .
-    container_name: ai_ecommerce_streamlit
-
-    ports:
-      - "8501:8501"
-
-    volumes:
-      - .:/app
-
-    env_file:
-      - .env
-
-    depends_on:
-      - ollama
-
-    command: streamlit run streamlit_app/home.py --server.port=8501 --server.address=0.0.0.0
 
   fastapi:
     build: .
@@ -25,27 +9,71 @@ services:
     ports:
       - "8000:8000"
 
-    volumes:
-      - .:/app
-
     env_file:
       - .env
+
+    command: uvicorn api.app:app --host 0.0.0.0 --port 8000
 
     depends_on:
       - ollama
 
-    command: uvicorn api.app:app --host 0.0.0.0 --port 8000
+    volumes:
+      - .:/app
+
+  streamlit:
+    build: .
+    container_name: ai_ecommerce_streamlit
+
+    ports:
+      - "8501:8501"
+
+    env_file:
+      - .env
+
+    command: streamlit run streamlit_app/home.py --server.port=8501 --server.address=0.0.0.0
+
+    depends_on:
+      - fastapi
+
+    volumes:
+      - .:/app
 
   ollama:
     image: ollama/ollama
-
     container_name: ollama
 
     ports:
       - "11434:11434"
 
     volumes:
-      - ollama:/root/.ollama
+      - ollama_data:/root/.ollama
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+
+    ports:
+      - "9090:9090"
+
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+    depends_on:
+      - fastapi
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+
+    ports:
+      - "3000:3000"
+
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+    depends_on:
+      - prometheus
 
 volumes:
-  ollama:
+  ollama_data:
